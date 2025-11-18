@@ -1,53 +1,38 @@
 pipeline {
-  agent any
+    agent any
 
-  tools {
-    jdk 'JDK17'
-    maven 'Maven3'
-  }
+    tools {
+        maven "Maven3"   // nom configuré dans Jenkins
+        jdk "JDK17"           // nom configuré dans Jenkins
+    }
+       stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
+                    credentialsId: 'github-credentials-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	'
+            }
+        }
 
-  environment {
-    GIT_CREDENTIALS_ID = 'github-credentials-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'
-    REPO_SSH_URL = 'git@github.com:ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git'
-    BRANCH = 'main'
-  }
+        stage('Build') {
+            steps {
+                sh "mvn clean package -DskipTests"
+            }
+        }
 
-  stages {
-    stage('Check tools') {
-      steps {
-        sh 'java -version'
-        sh 'mvn -version'
-        sh 'whoami'
-      }
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
     }
 
-    stage('Checkout') {
-      steps {
-        checkout([$class: 'GitSCM',
-          branches: [[name: "*/${env.BRANCH}"]],
-          userRemoteConfigs: [[
-            url: env.REPO_SSH_URL,
-            credentialsId: env.GIT_CREDENTIALS_ID
-          ]]
-        ])
-      }
+    post {
+        success {
+            echo "Build succeeded"
+        }
+        failure {
+            echo "Build failed"
+        }
     }
-
-    stage('Build (clean → package)') {
-      steps {
-        sh 'mvn clean package -DskipTests=true'
-      }
-    }
-
-    stage('Archive artifact') {
-      steps {
-        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-      }
-    }
-  }
-
-  post {
-    success { echo 'BUILD SUCCESS - artifact archived.' }
-    failure { echo 'BUILD FAILED - see Console Output.' }
-  }
 }
