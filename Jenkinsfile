@@ -7,7 +7,7 @@ pipeline {
   }
 
   environment {
-    GIT_CREDENTIALS_ID = 'github-ssh-jenkins-ghalia'
+    GIT_CREDENTIALS_ID = 'github-credentials-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'
     REPO_SSH_URL = 'git@github.com:ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git'
     BRANCH = 'main'
   }
