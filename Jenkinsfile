@@ -13,7 +13,7 @@ pipeline {
     // credential id pour Docker Hub (doit exister dans Jenkins)
     DOCKERHUB_CREDENTIALS = "dockerhub"
     // credential id GitHub (doit exister dans Jenkins)
-    GITHUB_CREDENTIALS = "github-credentials-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"
+    GITHUB_CREDENTIALS = "test"
   }
 
   stages {
