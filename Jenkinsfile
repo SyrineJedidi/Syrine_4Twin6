@@ -26,7 +26,26 @@ pipeline {
             }
         }
     }
+    stage('Build Docker image') {
+  steps {
+    script {
+      env.IMAGE_TAG = "${env.BUILD_NUMBER}-${sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()}"
+      sh "docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} ."
+      sh "docker tag ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_IMAGE}:latest"
+    }
+  }
+}
 
+stage('Push Docker image') {
+  steps {
+    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+      sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+      sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
+      sh "docker push ${DOCKER_IMAGE}:latest"
+      sh 'docker logout'
+    }
+  }
+}
     post {
         success {
             echo "Build succeeded"
