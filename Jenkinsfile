@@ -2,20 +2,27 @@ pipeline {
   agent any
 
   tools {
+    // noms des outils tels qu'ils doivent être configurés dans Manage Jenkins -> Global Tool Configuration
     maven "Maven3"
     jdk "JDK17"
   }
 
   environment {
-    // ADAPTE ICI ton image Docker Hub si besoin
-    DOCKER_IMAGE = "ghaliaelouaer/monapp"
+    // nom de l'image (doit commencer par ton username Docker Hub)
+    IMAGE_NAME = "ghaliaelouaer/student"
+    // credential id pour Docker Hub (doit exister dans Jenkins)
     DOCKERHUB_CREDENTIALS = "dockerhub"
+    // credential id GitHub (doit exister dans Jenkins)
+    GITHUB_CREDENTIALS = "github-credentials-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"
   }
 
   stages {
     stage('Checkout') {
       steps {
-        checkout scm
+        // on clone directement le repo de Ghalia (utilise le credential PAT configuré dans Jenkins)
+        git branch: 'main',
+            url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
+            credentialsId: env.GITHUB_CREDENTIALS
       }
     }
 
@@ -31,34 +38,41 @@ pipeline {
       }
     }
 
-    stage('Build Docker image') {
+    stage('Docker: Build Image') {
       steps {
         script {
-          env.IMAGE_TAG = "${env.BUILD_NUMBER}-${sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()}"
-          sh "docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} ."
-          sh "docker tag ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_IMAGE}:latest"
+          // utilise le wrapper docker.build fourni par le plugin Pipeline: Docker
+          dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
         }
       }
     }
 
-    stage('Push Docker image') {
+    stage('Docker: Push to Docker Hub') {
       steps {
-        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-          sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-          sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
-          sh "docker push ${DOCKER_IMAGE}:latest"
-          sh 'docker logout'
+        script {
+          // push de façon sécurisée avec les credentials Jenkins
+          docker.withRegistry('https://registry.hub.docker.com', env.DOCKERHUB_CREDENTIALS) {
+            dockerImage.push("${IMAGE_TAG}")
+           
+          }
         }
+      }
+    }
+
+    stage('Cleanup') {
+      steps {
+        // nettoyage d'images locales pour libérer de l'espace
+        sh "docker image rm ${IMAGE_NAME}:${IMAGE_TAG} || true"
       }
     }
   } // end stages
 
   post {
     success {
-      echo "Build réussi — image poussée : ${DOCKER_IMAGE}:${IMAGE_TAG}"
+      echo "Build succeeded — image pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
     }
     failure {
-      echo "Build échoué"
+      echo "Build failed"
     }
   }
 }
