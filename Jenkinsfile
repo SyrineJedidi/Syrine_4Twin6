@@ -10,10 +10,7 @@ pipeline {
   environment {
     // nom de l'image (doit commencer par ton username Docker Hub)
     IMAGE_NAME = "ghaliaelouaer/student"
-    // credential id pour Docker Hub (doit exister dans Jenkins)
-    DOCKERHUB_CREDENTIALS = "dockerhub"
-    // credential id GitHub (doit exister dans Jenkins)
-    GITHUB_CREDENTIALS = "test"
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
   }
 
   stages {
@@ -22,7 +19,7 @@ pipeline {
         // on clone directement le repo de Ghalia (utilise le credential PAT configuré dans Jenkins)
         git branch: 'main',
             url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
-            credentialsId: env.GITHUB_CREDENTIALS
+            crendentialsId:'test'
       }
     }
 
@@ -51,8 +48,8 @@ pipeline {
       steps {
         script {
           // push de façon sécurisée avec les credentials Jenkins
-          docker.withRegistry('https://registry.hub.docker.com', env.DOCKERHUB_CREDENTIALS) {
-            dockerImage.push("${IMAGE_TAG}")
+          docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+            dockerImage.push()
            
           }
         }
