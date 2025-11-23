@@ -19,7 +19,7 @@ pipeline {
         // on clone directement le repo de Ghalia (utilise le credential PAT configuré dans Jenkins)
         git branch: 'main',
             url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
-            crendentialsId: 'test'
+            credentialsId: 'test'
       }
     }
 
