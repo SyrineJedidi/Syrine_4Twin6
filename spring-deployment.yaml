@@ -1,1 +1,6 @@
-ghaliaelouaer/student
+spec:
+  containers:
+    - name: student-app
+      image: ghaliaelouaer/student:3
+      ports:
+        - containerPort: 8080
