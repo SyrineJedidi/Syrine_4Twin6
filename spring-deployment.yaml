@@ -1,6 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studentmang-app
+  namespace: devops
 spec:
-  containers:
-    - name: student-app
-      image: ghaliaelouaer/student:3
-      ports:
-        - containerPort: 8080
+  replicas: 1
+  selector:
+    matchLabels:
+      app: studentmang-app
+  template:
+    metadata:
+      labels:
+        app: studentmang-app
+    spec:
+      containers:
+        - name: student-app
+          image: ghaliaelouaer/student:3
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql-service:3306/testdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: com.mysql.cj.jdbc.Driver
