@@ -11,6 +11,7 @@ pipeline {
     // nom de l'image (doit commencer par ton username Docker Hub)
     IMAGE_NAME = "ghaliaelouaer/student"
     IMAGE_TAG = "${env.BUILD_NUMBER}"
+    KUBE_NAMESPACE = "devops"
   }
 
   stages {
@@ -55,6 +56,28 @@ pipeline {
         }
       }
     }
+    stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                  withEnv(["KUBECONFIG=/home/jenkins/.kube/config"]) {
+                    sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
+                    
+                    sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f k8s/mysql-service.yaml -n ${KUBE_NAMESPACE}"
+
+                    // Déploiement Spring Boot
+                    sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f k8s/spring-service.yaml -n ${KUBE_NAMESPACE}"
+
+                    // Optionnel : attendre que les pods soient prêts
+                    sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
+
+                }
+                }
+            }
+        }
+
 
     stage('Cleanup') {
       steps {
