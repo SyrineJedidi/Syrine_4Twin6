@@ -49,9 +49,9 @@ pipeline {
       steps {
         script {
           // push de façon sécurisée avec les credentials Jenkins
+          def dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
           docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            dockerImage.push()
-           
+          dockerImage.push()
           }
         }
       }
@@ -59,20 +59,14 @@ pipeline {
     stage('Deploy to Kubernetes') {
             steps {
                 script {
-                  withEnv(["KUBECONFIG=/home/jenkins/.kube/config"]) {
-                    sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
-                    
-                    sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
-                    sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
-                    sh "kubectl apply -f k8s/mysql-service.yaml -n ${KUBE_NAMESPACE}"
-
-                    // Déploiement Spring Boot
-                    sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
-                    sh "kubectl apply -f k8s/springboot-service.yaml -n ${KUBE_NAMESPACE}"
-
-                    // Optionnel : attendre que les pods soient prêts
-                    sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
-
+                  withEnv(["KUBECONFIG=${WORKSPACE}/jenkins-kubeconfig"]) {
+                     sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl apply -f k8s/mysql-service.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl apply -f k8s/springboot-service.yaml -n ${KUBE_NAMESPACE}"
+                     sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
                 }
                 }
             }
