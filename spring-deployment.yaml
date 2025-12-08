@@ -1,32 +1,42 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: studentmang-app
-  namespace: devops
+  name: spring-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: studentmang-app
+      app: spring-app
   template:
     metadata:
       labels:
-        app: studentmang-app
+        app: spring-app
     spec:
+      imagePullSecrets:
+        - name: dockerhub-credentials   # <-- Ajouté ici
       containers:
-        - name: studentmang-app
-          image: ghaliaelouaer/student:3
+        - name: spring-app
+          image: maramsd/studentmang-app:latest
           ports:
             - containerPort: 8089
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql-service:3306/testdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+              value: "jdbc:mysql://mysql-service:3306/studentdb?createDatabaseIfNotExist=true"
             - name: SPRING_DATASOURCE_USERNAME
-              value: root
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mysql-secret
-                  key: MYSQL_ROOT_PASSWORD   # <- attention à la casse exacte !
+                  key: MYSQL_PASSWORD
             - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-              value: com.mysql.cj.jdbc.Driver
+              value: "com.mysql.cj.jdbc.Driver"
+            - name: SPRING_JPA_SHOW_SQL
+              value: "true"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SERVER_SERVLET_CONTEXT_PATH
+              value: "/student"
