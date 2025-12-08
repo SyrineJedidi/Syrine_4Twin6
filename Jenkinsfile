@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3' // Nom configuré dans Jenkins → Manage Jenkins → Global Tool Configuration
-        jdk 'JDK17'    // Nom configuré dans Jenkins
+        maven 'Maven3'  // Nom de l’outil Maven configuré dans Jenkins
+        jdk 'JDK17'     // Nom du JDK configuré dans Jenkins
     }
 
     environment {
-        IMAGE_NAME = "ghaliaelouaer/student" // Remplace par ton nom Docker Hub si besoin
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // ID des credentials Docker dans Jenkins
+        IMAGE_NAME = "ghaliaelouaer/student"  // Ton image Docker
+        IMAGE_TAG  = "${env.BUILD_NUMBER}"    // Tag basé sur le numéro de build Jenkins
+        DOCKER_CREDENTIALS_ID = 'dockerhub'   // ID exact de tes credentials Jenkins
     }
 
     stages {
@@ -36,7 +36,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${dockerhub}") {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
                         docker.image("${env.IMAGE_NAME}:${env.IMAGE_TAG}").push()
                     }
                 }
@@ -45,7 +45,7 @@ pipeline {
 
         stage('Clean up Docker Images') {
             steps {
-                sh "docker rmi ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                sh "docker rmi ${env.IMAGE_NAME}:${env.IMAGE_TAG} || true"
             }
         }
     }
@@ -55,7 +55,7 @@ pipeline {
             echo "Build, Docker image creation and push completed successfully!"
         }
         failure {
-            echo "Something went wrong. Check the logs!"
+            echo "Pipeline failed. Check the logs for details."
         }
     }
 }
