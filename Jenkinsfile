@@ -68,7 +68,7 @@ pipeline {
 
                     // Déploiement Spring Boot
                     sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
-                    sh "kubectl apply -f k8s/spring-service.yaml -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f k8s/springboot-service.yaml -n ${KUBE_NAMESPACE}"
 
                     // Optionnel : attendre que les pods soient prêts
                     sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
