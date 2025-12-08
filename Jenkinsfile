@@ -2,60 +2,93 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'  // Nom de l’outil Maven configuré dans Jenkins
-        jdk 'JDK17'     // Nom du JDK configuré dans Jenkins
+        maven "Maven3"
+        jdk "JDK17"
     }
 
     environment {
-        IMAGE_NAME = "ghaliaelouaer/student"  // Ton image Docker
-        IMAGE_TAG  = "${env.BUILD_NUMBER}"    // Tag basé sur le numéro de build Jenkins
-        DOCKER_CREDENTIALS_ID = 'dockerhub'   // ID exact de tes credentials Jenkins
+        IMAGE_NAME = "ghaliaelouaer/student"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        KUBE_NAMESPACE = "devops"
+        DOCKER_CREDENTIALS_ID = "dockerhub"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
+                    credentialsId: 'test'
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build (Maven)') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh "mvn clean package -DskipTests"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+
+        stage('Docker: Build Image') {
             steps {
                 script {
-                    docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}")
+                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Docker: Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${env.IMAGE_NAME}:${env.IMAGE_TAG}").push()
+                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                        dockerImage.push()
                     }
                 }
             }
         }
 
-        stage('Clean up Docker Images') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh "docker rmi ${env.IMAGE_NAME}:${env.IMAGE_TAG} || true"
+                script {
+                    withEnv(["KUBECONFIG=${WORKSPACE}/jenkins-kubeconfig"]) {
+                        // PVC et secrets MySQL
+                        sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/mysql-service.yaml -n ${KUBE_NAMESPACE}"
+
+                        // Déploiement Spring Boot
+                        sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
+                        sh "kubectl apply -f k8s/springboot-service.yaml -n ${KUBE_NAMESPACE}"
+
+                        // Attendre que le déploiement Spring soit prêt
+                        sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
+                    }
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                script {
+                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+                    sh "docker system prune -f"
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Build, Docker image creation and push completed successfully!"
+            echo "Pipeline succeeded — Docker image pushed: ${IMAGE_NAME}:${IMAGE_TAG} and deployed to Kubernetes."
         }
         failure {
-            echo "Pipeline failed. Check the logs for details."
+            echo "Pipeline failed — check logs for errors."
         }
     }
 }
