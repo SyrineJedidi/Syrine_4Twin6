@@ -79,7 +79,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: sonarqube-logs-pvc
   namespace: sonarqube
-spec:
+spec: 
   accessModes:
     - ReadWriteOnce
   resources:
