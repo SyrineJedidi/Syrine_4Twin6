@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = "ghaliaelouaer/student"
+        /*IMAGE_NAME = "ghaliaelouaer/student"//*/
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_NAMESPACE = "devops"
         DOCKER_CREDENTIALS_ID = "dockerhub"
@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/ghaliaelouaer24/ELOUAER_GHALIA_INFINI2.git',
+                    url: 'https://github.com/SyrineJedidi/Syrine_4Twin6',
                     credentialsId: 'test'
             }
         }
