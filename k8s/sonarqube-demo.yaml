@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sonarqube-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-demo
+  namespace: sonarqube-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-demo
+  template:
+    metadata:
+      labels:
+        app: sonarqube-demo
+    spec:
+      containers:
+      - name: sonarqube
+        image: sonarqube:8.9.10-community
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SONAR_EMBEDDEDDATABASE_PORT
+          value: "9092"
+        - name: SONAR_ES_BOOTSTRAP_CHECKS_DISABLE
+          value: "true"
+        - name: SONAR_WEB_JAVAOPTS
+          value: "-Xmx128m -Xms64m"
+        resources:
+          requests:
+            memory: "192Mi"   # Très bas
+            cpu: "100m"
+          limits:
+            memory: "256Mi"   # Maximum 256MB
+            cpu: "250m"
+        startupProbe:
+          httpGet:
+            path: /api/system/status
+            port: 9000
+          failureThreshold: 300  # Très très patient (50 minutes)
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-demo-service
+  namespace: sonarqube-demo
+spec:
+  type: NodePort
+  selector:
+    app: sonarqube-demo
+  ports:
+  - port: 9000
+    targetPort: 9000
+    nodePort: 30001  # Port différent pour éviter les conflits

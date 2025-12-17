@@ -1,0 +1,20 @@
+NAME                                    READY   STATUS             RESTARTS         AGE
+pod/mysql-597d5f8488-lpmxq              1/1     Running            7 (4m59s ago)    7d
+pod/spring-deployment-fb4847f57-qk2nl   1/1     Running            25 (4m10s ago)   7d
+pod/studentmang-app-7f794fc67b-cjpp8    0/1     ImagePullBackOff   1 (6d21h ago)    7d4h
+
+NAME                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/mysql-service        ClusterIP   None            <none>        3306/TCP         7d4h
+service/spring-service       NodePort    10.97.44.15     <none>        8080:32639/TCP   7d14h
+service/springboot-service   NodePort    10.111.114.58   <none>        8080:31205/TCP   7d14h
+
+NAME                                READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mysql               1/1     1            1           7d4h
+deployment.apps/spring-deployment   1/1     1            1           7d
+deployment.apps/studentmang-app     0/1     1            0           7d14h
+
+NAME                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/mysql-597d5f8488              1         1         1       7d
+replicaset.apps/mysql-5b5c8786f5              0         0         0       7d4h
+replicaset.apps/spring-deployment-fb4847f57   1         1         1       7d
+replicaset.apps/studentmang-app-7f794fc67b    1         1         0       7d14h
