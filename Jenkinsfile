@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        /*IMAGE_NAME = "ghaliaelouaer/student"//*/
+        IMAGE_NAME = "syrinejedidi/student"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_NAMESPACE = "devops"
         DOCKER_CREDENTIALS_ID = "dockerhub"
