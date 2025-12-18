@@ -42,11 +42,12 @@ pipeline {
             }
         }
 
-        stage('Docker: Push to Docker Hub') {
+       stage('Docker: Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-                        docker.image("syrinejedidi/student:13").push()
+                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                        dockerImage.push("${IMAGE_TAG}")
+                        dockerImage.push("latest")
                     }
                 }
             }
