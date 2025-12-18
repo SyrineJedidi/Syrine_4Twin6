@@ -28,6 +28,22 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+    environment {
+        SONARQUBE_SCANNER_HOME = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+    }
+    steps {
+        withSonarQubeEnv('SonarQube') { // 'SonarQube' = nom configuré dans Jenkins Manage SonarQube servers
+            sh "${SONARQUBE_SCANNER_HOME}/bin/sonar-scanner \
+                -Dsonar.projectKey=Syrine_4Twin6 \
+                -Dsonar.sources=src \
+                -Dsonar.host.url=http://localhost:9000 \
+                -Dsonar.login=${SONAR_TOKEN}"
+        }
+    }
+}
+
+
         stage('Archive Artifacts') {
             steps {
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
