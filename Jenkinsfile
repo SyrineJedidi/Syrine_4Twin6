@@ -10,7 +10,7 @@ pipeline {
         IMAGE_NAME = "syrinejedidi/student"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         KUBE_NAMESPACE = "devops"
-        DOCKER_CREDENTIALS_ID = "dockerhub"
+        DOCKER_CREDENTIALS_ID = "docker-hub-token" // <- ton ID de credential avec le token Docker Hub
     }
 
     stages {
@@ -37,15 +37,17 @@ pipeline {
         stage('Docker: Build Image') {
             steps {
                 script {
+                    // Build de l'image Docker
                     dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
 
-       stage('Docker: Push to Docker Hub') {
+        stage('Docker: Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                    // Utilisation sécurisée du token Docker Hub
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push("${IMAGE_TAG}")
                         dockerImage.push("latest")
                     }
@@ -57,17 +59,12 @@ pipeline {
             steps {
                 script {
                     withEnv(["KUBECONFIG=${WORKSPACE}/jenkins-kubeconfig"]) {
-                        // PVC et secrets MySQL
                         sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/mysql-service.yaml -n ${KUBE_NAMESPACE}"
-
-                        // Déploiement Spring Boot
                         sh "kubectl apply -f k8s/spring-deployment.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/springboot-service.yaml -n ${KUBE_NAMESPACE}"
-
-                        // Attendre que le déploiement Spring soit prêt
                         sh "kubectl rollout status deployment/spring-deployment -n ${KUBE_NAMESPACE}"
                     }
                 }
