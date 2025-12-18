@@ -58,7 +58,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withEnv(["KUBECONFIG=${WORKSPACE}/jenkins-kubeconfig"]) {
+                    withEnv(["KUBECONFIG=/home/syrine/.kube/config"]) {
                         sh "kubectl apply -f k8s/mysql-pvc.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/mysql-secret.yaml -n ${KUBE_NAMESPACE}"
                         sh "kubectl apply -f k8s/mysql-deployment.yaml -n ${KUBE_NAMESPACE}"
